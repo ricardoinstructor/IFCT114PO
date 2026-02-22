@@ -1,6 +1,6 @@
 # 🔥 UF15 — Gateway y Firewall
 
-![Unidad Formativa 15](../../Presentación/imgs/unidadformativa15.jpeg)
+![Unidad Formativa 15](../../PRESENTACION/imgs/unidadformativa15.jpeg)
 
 > **Unidad Formativa 15** · Módulo 2: Administración del Sistema · IFCT114PO
 

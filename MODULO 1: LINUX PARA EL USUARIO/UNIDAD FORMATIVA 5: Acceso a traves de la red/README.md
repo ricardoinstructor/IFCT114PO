@@ -1,6 +1,6 @@
 # 🌐 UF5 — Acceso a través de la Red
 
-![Unidad Formativa 5](../../Presentación/imgs/UNIDADFORMATIVA5.png)
+![Unidad Formativa 5](../../PRESENTACION/imgs/UNIDADFORMATIVA5.png)
 
 > **Unidad Formativa 5** · Módulo 1: Linux para el Usuario · IFCT114PO
 

@@ -1,6 +1,6 @@
 # 📡 UF14 — Servicios de Red
 
-![Unidad Formativa 14](../../Presentación/imgs/unidadformativa14.jpeg)
+![Unidad Formativa 14](../../PRESENTACION/imgs/unidadformativa14.jpeg)
 
 > **Unidad Formativa 14** · Módulo 2: Administración del Sistema · IFCT114PO
 

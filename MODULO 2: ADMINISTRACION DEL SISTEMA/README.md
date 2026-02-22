@@ -1,6 +1,6 @@
 # 🖥️ MÓDULO 2: Administración del Sistema
 
-![Módulo 2](../Presentación/imgs/modulo2.png)
+![Módulo 2](../PRESENTACION/imgs/modulo2.png)
 
 > **Módulo 2** del curso **IFCT114PO — Linux: Administración de Sistemas**
 

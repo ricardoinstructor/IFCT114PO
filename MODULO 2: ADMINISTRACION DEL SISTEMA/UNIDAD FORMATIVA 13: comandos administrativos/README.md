@@ -1,6 +1,6 @@
 # 🔨 UF13 — Comandos Administrativos
 
-![Unidad Formativa 13](../../Presentación/imgs/unidadformativa13.jpeg)
+![Unidad Formativa 13](../../PRESENTACION/imgs/unidadformativa13.jpeg)
 
 > **Unidad Formativa 13** · Módulo 2: Administración del Sistema · IFCT114PO
 

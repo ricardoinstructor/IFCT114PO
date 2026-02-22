@@ -1,6 +1,6 @@
 # 🐧 IFCT114PO — Linux: Administración de Sistemas
 
-![Portada del curso](Presentación/imgs/portada.png)
+![Portada del curso](PRESENTACION/imgs/portada.png)
 
 > **Curso de Especialización:** Administración de Sistemas Linux  
 > **Código:** IFCT114PO  

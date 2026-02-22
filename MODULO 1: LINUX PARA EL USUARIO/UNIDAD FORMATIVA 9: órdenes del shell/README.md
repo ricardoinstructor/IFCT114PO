@@ -1,6 +1,6 @@
 # 🔧 UF9 — Órdenes del Shell
 
-![Unidad Formativa 9](../../Presentación/imgs/unidadformativa9.jpeg)
+![Unidad Formativa 9](../../PRESENTACION/imgs/unidadformativa9.jpeg)
 
 > **Unidad Formativa 9** · Módulo 1: Linux para el Usuario · IFCT114PO
 

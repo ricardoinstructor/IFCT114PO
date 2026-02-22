@@ -1,6 +1,6 @@
 # 👥 UF11 — Usuarios y Grupos
 
-![Unidad Formativa 11](../../Presentación/imgs/unidadformativa11.jpeg)
+![Unidad Formativa 11](../../PRESENTACION/imgs/unidadformativa11.jpeg)
 
 > **Unidad Formativa 11** · Módulo 2: Administración del Sistema · IFCT114PO
 

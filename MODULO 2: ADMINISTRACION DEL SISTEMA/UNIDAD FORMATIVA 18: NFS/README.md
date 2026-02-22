@@ -1,6 +1,6 @@
 # 📂 UF18 — NFS (Network File System)
 
-![Unidad Formativa 18](../../Presentación/imgs/unidadformativa18.jpeg)
+![Unidad Formativa 18](../../PRESENTACION/imgs/unidadformativa18.jpeg)
 
 > **Unidad Formativa 18** · Módulo 2: Administración del Sistema · IFCT114PO
 

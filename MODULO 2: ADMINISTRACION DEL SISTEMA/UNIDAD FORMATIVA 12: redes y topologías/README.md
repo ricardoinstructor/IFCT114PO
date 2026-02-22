@@ -1,6 +1,6 @@
 # 🌐 UF12 — Redes y Topologías
 
-![Unidad Formativa 12](../../Presentación/imgs/unidadformativa12.jpeg)
+![Unidad Formativa 12](../../PRESENTACION/imgs/unidadformativa12.jpeg)
 
 > **Unidad Formativa 12** · Módulo 2: Administración del Sistema · IFCT114PO
 

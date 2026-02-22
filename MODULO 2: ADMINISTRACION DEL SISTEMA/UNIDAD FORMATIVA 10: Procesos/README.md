@@ -1,6 +1,6 @@
 # ⚙️ UF10 — Procesos
 
-![Unidad Formativa 10](../../Presentación/imgs/UNIDADFORMATIVA10.png)
+![Unidad Formativa 10](../../PRESENTACION/imgs/UNIDADFORMATIVA10.png)
 
 > **Unidad Formativa 10** · Módulo 2: Administración del Sistema · IFCT114PO
 

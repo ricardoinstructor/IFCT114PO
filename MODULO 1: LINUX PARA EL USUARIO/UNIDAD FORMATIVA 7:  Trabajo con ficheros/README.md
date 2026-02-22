@@ -1,6 +1,6 @@
 # 🗃️ UF7 — Trabajo con Ficheros
 
-![Unidad Formativa 7](../../Presentación/imgs/UNIDADFORMATIVA7.png)
+![Unidad Formativa 7](../../PRESENTACION/imgs/UNIDADFORMATIVA7.png)
 
 > **Unidad Formativa 7** · Módulo 1: Linux para el Usuario · IFCT114PO
 

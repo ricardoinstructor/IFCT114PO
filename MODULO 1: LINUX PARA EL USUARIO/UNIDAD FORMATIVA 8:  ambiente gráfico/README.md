@@ -1,6 +1,6 @@
 # 🖥️ UF8 — Ambiente Gráfico
 
-![Unidad Formativa 8](../../Presentación/imgs/unidadformativa8.jpeg)
+![Unidad Formativa 8](../../PRESENTACION/imgs/unidadformativa8.jpeg)
 
 > **Unidad Formativa 8** · Módulo 1: Linux para el Usuario · IFCT114PO
 

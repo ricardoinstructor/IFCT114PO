@@ -1,6 +1,6 @@
 # 📴 UF6 — Ficheros Offline
 
-![Unidad Formativa 6](../../Presentación/imgs/unidadformativa6.jpeg)
+![Unidad Formativa 6](../../PRESENTACION/imgs/unidadformativa6.jpeg)
 
 > **Unidad Formativa 6** · Módulo 1: Linux para el Usuario · IFCT114PO
 

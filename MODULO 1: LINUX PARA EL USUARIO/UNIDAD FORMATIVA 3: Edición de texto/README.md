@@ -1,6 +1,6 @@
 # ✏️ UF3 — Edición de Texto
 
-![Unidad Formativa 3](../../Presentación/imgs/UNIDADFORMATIVA3.png)
+![Unidad Formativa 3](../../PRESENTACION/imgs/UNIDADFORMATIVA3.png)
 
 > **Unidad Formativa 3** · Módulo 1: Linux para el Usuario · IFCT114PO
 

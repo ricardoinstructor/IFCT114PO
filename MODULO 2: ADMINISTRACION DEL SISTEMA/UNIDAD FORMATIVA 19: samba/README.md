@@ -1,6 +1,6 @@
 # 🤝 UF19 — Samba
 
-![Unidad Formativa 19](../../Presentación/imgs/UNIDADFORMATIVA19.png)
+![Unidad Formativa 19](../../PRESENTACION/imgs/UNIDADFORMATIVA19.png)
 
 > **Unidad Formativa 19** · Módulo 2: Administración del Sistema · IFCT114PO
 

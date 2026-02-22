@@ -1,6 +1,6 @@
 # 🐧 UF1 — Introducción a Linux
 
-![Unidad Formativa 1](../../Presentación/imgs/UNIDADFORMATIVA1.png)
+![Unidad Formativa 1](../../PRESENTACION/imgs/UNIDADFORMATIVA1.png)
 
 > **Unidad Formativa 1** · Módulo 1: Linux para el Usuario · IFCT114PO
 

@@ -1,6 +1,6 @@
 # 📦 MÓDULO 1: Linux para el Usuario
 
-![Módulo 1](../Presentación/imgs/modulo1.png)
+![Módulo 1](../PRESENTACION/imgs/modulo1.png)
 
 > **Módulo 1** del curso **IFCT114PO — Linux: Administración de Sistemas**
 

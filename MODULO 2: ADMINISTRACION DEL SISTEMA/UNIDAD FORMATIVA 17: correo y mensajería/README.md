@@ -1,6 +1,6 @@
 # 📧 UF17 — Correo y Mensajería
 
-![Unidad Formativa 17](../../Presentación/imgs/unidadformativa17.jpeg)
+![Unidad Formativa 17](../../PRESENTACION/imgs/unidadformativa17.jpeg)
 
 > **Unidad Formativa 17** · Módulo 2: Administración del Sistema · IFCT114PO
 

@@ -1,6 +1,6 @@
 # 📁 UF2 — El Sistema de Archivos
 
-![Unidad Formativa 2](../../Presentación/imgs/unidadformativa2.jpeg)
+![Unidad Formativa 2](../../PRESENTACION/imgs/unidadformativa2.jpeg)
 
 > **Unidad Formativa 2** · Módulo 1: Linux para el Usuario · IFCT114PO
 

@@ -1,6 +1,6 @@
 # 🔒 UF4 — Permisos
 
-![Unidad Formativa 4](../../Presentación/imgs/unidadformativa4.jpeg)
+![Unidad Formativa 4](../../PRESENTACION/imgs/unidadformativa4.jpeg)
 
 > **Unidad Formativa 4** · Módulo 1: Linux para el Usuario · IFCT114PO
 

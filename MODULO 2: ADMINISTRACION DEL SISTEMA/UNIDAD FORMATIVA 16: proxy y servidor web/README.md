@@ -1,6 +1,6 @@
 # 🌍 UF16 — Proxy y Servidor Web
 
-![Unidad Formativa 16](../../Presentación/imgs/UNIDADFORMATIVA16.png)
+![Unidad Formativa 16](../../PRESENTACION/imgs/UNIDADFORMATIVA16.png)
 
 > **Unidad Formativa 16** · Módulo 2: Administración del Sistema · IFCT114PO
 
