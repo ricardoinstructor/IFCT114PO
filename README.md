@@ -14,7 +14,35 @@ Este repositorio contiene todos los materiales didácticos del curso **IFCT114PO
 
 ---
 
-## 🗂️ Estructura del Curso
+## � Documentación — Linux Professional Institute
+
+La documentación oficial de referencia utilizada en este curso es la proporcionada por el **Linux Professional Institute (LPI)**, una de las certificaciones Linux más reconocidas a nivel internacional.
+
+> 🔗 [**Acceder a los materiales de aprendizaje LPI**](https://learning.lpi.org/es/learning-materials/learning-materials/)
+
+---
+
+## 🖥️ Servidor de Acceso para el Curso
+
+Durante el curso dispondremos de un servidor Linux en la nube para realizar las prácticas de forma remota.
+
+| 🔧 Parámetro | 📋 Valor |
+|-------------|---------|
+| 🌐 **Dirección IP** | `35.193.198.73` |
+| 🔑 **Método de acceso** | SSH |
+| 👤 **Usuario** | `curso` |
+| 🔐 **Contraseña** | *(la indicará el instructor en la presentación del curso)* |
+
+**Comando de conexión:**
+```bash
+ssh curso@35.193.198.73
+```
+
+> ⚠️ **Nota:** La contraseña de acceso será facilitada por el instructor al inicio de cada sesión.
+
+---
+
+## �🗂️ Estructura del Curso
 
 ### 📦 [MÓDULO 1: Linux para el Usuario](MODULO%201%3A%20LINUX%20PARA%20EL%20USUARIO/README.md)
 
