@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Descriptores de Archivo - Stdin, Stdout, Stderr</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0c0f14;
+            --bg-secondary: #151a23;
+            --fg: #e4e8ef;
+            --muted: #5a6577;
+            --accent-stdin: #22d3ee;
+            --accent-stdout: #34d399;
+            --accent-stderr: #f97316;
+            --card: #1a1f2a;
+            --border: #2a3142;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg);
+            color: var(--fg);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Grid background */
+        .grid-bg {
+            position: fixed;
+            inset: 0;
+            background-image: 
+                linear-gradient(var(--border) 1px, transparent 1px),
+                linear-gradient(90deg, var(--border) 1px, transparent 1px);
+            background-size: 50px 50px;
+            opacity: 0.08;
+            pointer-events: none;
+        }
+
+        /* Floating orbs */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(100px);
+            pointer-events: none;
+            animation: drift 25s ease-in-out infinite;
+        }
+
+        .orb-stdin {
+            width: 350px;
+            height: 350px;
+            background: rgba(34, 211, 238, 0.15);
+            top: 10%;
+            left: 5%;
+        }
+
+        .orb-stdout {
+            width: 300px;
+            height: 300px;
+            background: rgba(52, 211, 153, 0.12);
+            bottom: 20%;
+            right: 10%;
+            animation-delay: -8s;
+        }
+
+        .orb-stderr {
+            width: 250px;
+            height: 250px;
+            background: rgba(249, 115, 22, 0.1);
+            top: 50%;
+            left: 50%;
+            animation-delay: -15s;
+        }
+
+        @keyframes drift {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(40px, -30px) scale(1.1); }
+            50% { transform: translate(-20px, 40px) scale(0.95); }
+            75% { transform: translate(30px, 20px) scale(1.05); }
+        }
+
+        /* Flow lines */
+        .flow-container {
+            position: absolute;
+            overflow: visible;
+            pointer-events: none;
+        }
+
+        .flow-line {
+            stroke-width: 3;
+            fill: none;
+            stroke-linecap: round;
+        }
+
+        .flow-line.stdin-flow {
+            stroke: var(--accent-stdin);
+            filter: drop-shadow(0 0 8px var(--accent-stdin));
+        }
+
+        .flow-line.stdout-flow {
+            stroke: var(--accent-stdout);
+            filter: drop-shadow(0 0 8px var(--accent-stdout));
+        }
+
+        .flow-line.stderr-flow {
+            stroke: var(--accent-stderr);
+            filter: drop-shadow(0 0 8px var(--accent-stderr));
+        }
+
+        .flow-particle {
+            fill: currentColor;
+        }
+
+        /* Component boxes */
+        .component-box {
+            background: linear-gradient(135deg, var(--card), var(--bg-secondary));
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            position: relative;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .component-box::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: 17px;
+            padding: 1px;
+            background: linear-gradient(135deg, transparent 40%, var(--border) 100%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+
+        .component-box:hover {
+            transform: translateY(-4px);
+        }
+
+        .component-box.stdin-active {
+            border-color: var(--accent-stdin);
+            box-shadow: 0 0 40px rgba(34, 211, 238, 0.2);
+        }
+
+        .component-box.stdout-active {
+            border-color: var(--accent-stdout);
+            box-shadow: 0 0 40px rgba(52, 211, 153, 0.2);
+        }
+
+        .component-box.stderr-active {
+            border-color: var(--accent-stderr);
+            box-shadow: 0 0 40px rgba(249, 115, 22, 0.2);
+        }
+
+        /* Terminal */
+        .terminal {
+            background: #0a0d12;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .terminal-header {
+            background: var(--bg-secondary);
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .terminal-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .terminal-body {
+            padding: 1rem;
+            min-height: 120px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .terminal-line {
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 0.5rem;
+            line-height: 1.6;
+        }
+
+        .terminal-prompt {
+            color: var(--accent-stdout);
+        }
+
+        .terminal-command {
+            color: var(--fg);
+        }
+
+        .terminal-output {
+            color: var(--muted);
+        }
+
+        .terminal-error {
+            color: var(--accent-stderr);
+        }
+
+        /* Descriptor badge */
+        .descriptor-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .descriptor-0 {
+            background: rgba(34, 211, 238, 0.15);
+            color: var(--accent-stdin);
+            border: 1px solid rgba(34, 211, 238, 0.3);
+        }
+
+        .descriptor-1 {
+            background: rgba(52, 211, 153, 0.15);
+            color: var(--accent-stdout);
+            border: 1px solid rgba(52, 211, 153, 0.3);
+        }
+
+        .descriptor-2 {
+            background: rgba(249, 115, 22, 0.15);
+            color: var(--accent-stderr);
+            border: 1px solid rgba(249, 115, 22, 0.3);
+        }
+
+        /* Button */
+        .sim-btn {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            color: var(--fg);
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sim-btn:hover {
+            border-color: var(--accent-stdin);
+            transform: translateY(-2px);
+        }
+
+        .sim-btn:active {
+            transform: translateY(0);
+        }
+
+        .sim-btn.active {
+            border-color: var(--accent-stdout);
+            background: rgba(52, 211, 153, 0.1);
+        }
+
+        /* Operator highlight */
+        .operator {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            background: rgba(34, 211, 238, 0.1);
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .operator-redir {
+            color: var(--accent-stdout);
+        }
+
+        .operator-error {
+            color: var(--accent-stderr);
+        }
+
+        .operator-input {
+            color: var(--accent-stdin);
+        }
+
+        /* Status indicator */
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--muted);
+            transition: all 0.3s;
+        }
+
+        .status-indicator.active-stdin {
+            background: var(--accent-stdin);
+            box-shadow: 0 0 15px var(--accent-stdin);
+            animation: pulse-cyan 1s ease-in-out infinite;
+        }
+
+        .status-indicator.active-stdout {
+            background: var(--accent-stdout);
+            box-shadow: 0 0 15px var(--accent-stdout);
+            animation: pulse-green 1s ease-in-out infinite;
+        }
+
+        .status-indicator.active-stderr {
+            background: var(--accent-stderr);
+            box-shadow: 0 0 15px var(--accent-stderr);
+            animation: pulse-orange 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse-cyan {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.7; }
+        }
+
+        @keyframes pulse-green {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.7; }
+        }
+
+        @keyframes pulse-orange {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.7; }
+        }
+
+        /* Notepad icon animation */
+        .notepad-icon {
+            animation: float-notepad 3s ease-in-out infinite;
+        }
+
+        @keyframes float-notepad {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        /* Typing cursor */
+        .cursor-blink {
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* Entrance animations */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .reveal-delay-1 { transition-delay: 0.1s; }
+        .reveal-delay-2 { transition-delay: 0.2s; }
+        .reveal-delay-3 { transition-delay: 0.3s; }
+        .reveal-delay-4 { transition-delay: 0.4s; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+
+        /* Reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .diagram-grid {
+                grid-template-columns: 1fr !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background -->
+    <div class="grid-bg"></div>
+    <div class="orb orb-stdin"></div>
+    <div class="orb orb-stdout"></div>
+    <div class="orb orb-stderr"></div>
+
+    <div class="relative z-10 min-h-screen py-8 px-4 md:px-8">
+        <!-- Header -->
+        <header class="max-w-6xl mx-auto mb-12 reveal">
+            <h1 class="text-3xl md:text-4xl font-bold mb-3 tracking-tight text-center">
+                Descriptores de Archivo en Linux/Unix
+            </h1>
+            <p class="text-lg text-slate-400 max-w-3xl mx-auto text-center">
+                Entiende como fluyen los datos entre procesos usando stdin, stdout y stderr
+            </p>
+        </header>
+
+        <!-- Main content -->
+        <main class="max-w-6xl mx-auto space-y-8">
+
+            <!-- Descriptor overview -->
+            <section class="reveal reveal-delay-1">
+                <div class="grid md:grid-cols-3 gap-4">
+                    <!-- STDIN -->
+                    <div class="component-box" id="stdinBox">
+                        <div class="flex items-center gap-3 mb-4">
+                            <span class="descriptor-badge descriptor-0">0</span>
+                            <div>
+                                <h3 class="font-semibold">STDIN</h3>
+                                <span class="mono text-xs text-slate-500">Entrada Estandar</span>
+                            </div>
+                            <div class="ml-auto status-indicator" id="stdinStatus"></div>
+                        </div>
+                        <p class="text-sm text-slate-400 mb-3">Canal por donde el proceso recibe datos. Por defecto: teclado.</p>
+                        <div class="mono text-xs p-2 bg-black/30 rounded-lg">
+                            <span class="operator operator-input">&lt;</span> redirige entrada
+                        </div>
+                    </div>
+
+                    <!-- STDOUT -->
+                    <div class="component-box" id="stdoutBox">
+                        <div class="flex items-center gap-3 mb-4">
+                            <span class="descriptor-badge descriptor-1">1</span>
+                            <div>
+                                <h3 class="font-semibold">STDOUT</h3>
+                                <span class="mono text-xs text-slate-500">Salida Estandar</span>
+                            </div>
+                            <div class="ml-auto status-indicator" id="stdoutStatus"></div>
+                        </div>
+                        <p class="text-sm text-slate-400 mb-3">Canal por donde el proceso envia resultados. Por defecto: monitor.</p>
+                        <div class="mono text-xs p-2 bg-black/30 rounded-lg">
+                            <span class="operator operator-redir">&gt;</span> redirige salida
+                        </div>
+                    </div>
+
+                    <!-- STDERR -->
+                    <div class="component-box" id="stderrBox">
+                        <div class="flex items-center gap-3 mb-4">
+                            <span class="descriptor-badge descriptor-2">2</span>
+                            <div>
+                                <h3 class="font-semibold">STDERR</h3>
+                                <span class="mono text-xs text-slate-500">Error Estandar</span>
+                            </div>
+                            <div class="ml-auto status-indicator" id="stderrStatus"></div>
+                        </div>
+                        <p class="text-sm text-slate-400 mb-3">Canal para mensajes de error. Separado de stdout para depuracion.</p>
+                        <div class="mono text-xs p-2 bg-black/30 rounded-lg">
+                            <span class="operator operator-error">2&gt;</span> redirige errores
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Interactive Diagram -->
+            <section class="reveal reveal-delay-2">
+                <div class="component-box p-6 md:p-8">
+                    <h2 class="text-xl font-semibold mb-6 text-center">Flujo de Datos: Bloc de Notas</h2>
+                    
+                    <!-- Control buttons -->
+                    <div class="flex flex-wrap justify-center gap-3 mb-8">
+                        <button class="sim-btn" onclick="simulateFlow('normal')">
+                            Flujo Normal
+                        </button>
+                        <button class="sim-btn" onclick="simulateFlow('input-redir')">
+                            Redirigir Entrada &lt;
+                        </button>
+                        <button class="sim-btn" onclick="simulateFlow('output-redr')">
+                            Redirigir Salida &gt;
+                        </button>
+                        <button class="sim-btn" onclick="simulateFlow('error')">
+                            Simular Error (stderr)
+                        </button>
+                    </div>
+
+                    <!-- Diagram -->
+                    <div class="relative">
+                        <!-- SVG Flow Lines -->
+                        <svg class="flow-container w-full h-32 md:h-24" viewBox="0 0 800 100" preserveAspectRatio="xMidYMid meet" id="flowSvg">
+                            <!-- STDIN line -->
+                            <path id="stdinPath" class="flow-line" d="M 100 50 L 400 50" stroke="var(--border)" stroke-dasharray="5,5"/>
+                            <!-- STDOUT line -->
+                            <path id="stdoutPath" class="flow-line" d="M 400 50 L 700 30" stroke="var(--border)" stroke-dasharray="5,5"/>
+                            <!-- STDERR line -->
+                            <path id="stderrPath" class="flow-line" d="M 400 50 L 700 70" stroke="var(--border)" stroke-dasharray="5,5"/>
+                        </svg>
+
+                        <!-- Components Grid -->
+                        <div class="grid grid-cols-3 gap-4 items-center diagram-grid mt-4">
+                            <!-- INPUT -->
+                            <div class="text-center" id="inputComponent">
+                                <div class="w-20 h-20 mx-auto mb-3 p-3 bg-slate-800/50 rounded-xl border border-slate-700">
+                                    <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <rect x="4" y="20" width="56" height="36" rx="3" stroke="var(--accent-stdin)" stroke-width="2" fill="none"/>
+                                        <rect x="8" y="26" width="6" height="4" rx="1" fill="var(--accent-stdin)" opacity="0.6"/>
+                                        <rect x="16" y="26" width="6" height="4" rx="1" fill="var(--accent-stdin)" opacity="0.6"/>
+                                        <rect x="24" y="26" width="6" height="4" rx="1" fill="var(--accent-stdin)" opacity="0.6"/>
+                                        <rect x="32" y="26" width="6" height="4" rx="1" fill="var(--accent-stdin)" opacity="0.6"/>
+                                        <rect x="40" y="26" width="6" height="4" rx="1" fill="var(--accent-stdin)" opacity="0.6"/>
+                                        <rect x="48" y="26" width="6" height="4" rx="1" fill="var(--accent-stdin)" opacity="0.6"/>
+                                        <rect x="10" y="34" width="6" height="4" rx="1" fill="var(--accent-stdin)" opacity="0.4"/>
+                                        <rect x="18" y="34" width="6" height="4" rx="1" fill="var(--accent-stdin)" opacity="0.4"/>
+                                        <rect x="26" y="34" width="12" height="4" rx="1" fill="var(--accent-stdin)" opacity="0.4"/>
+                                        <rect x="40" y="34" width="6" height="4" rx="1" fill="var(--accent-stdin)" opacity="0.4"/>
+                                        <rect x="20" y="44" width="24" height="4" rx="1" fill="var(--accent-stdin)" opacity="0.3"/>
+                                        <circle cx="52" cy="24" r="2" fill="var(--accent-stdin)"/>
+                                    </svg>
+                                </div>
+                                <span class="mono text-xs text-cyan-400">fd=0</span>
+                                <h4 class="font-semibold">Teclado</h4>
+                                <p class="text-xs text-slate-500 mt-1">Entrada estandar</p>
+                            </div>
+
+                            <!-- PROCESS -->
+                            <div class="text-center" id="processComponent">
+                                <div class="notepad-icon w-24 h-24 mx-auto mb-3 p-3 bg-slate-800/50 rounded-xl border border-slate-700">
+                                    <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <!-- Notepad body -->
+                                        <rect x="12" y="8" width="56" height="64" rx="4" stroke="var(--fg)" stroke-width="2" fill="var(--bg-secondary)"/>
+                                        <!-- Spiral -->
+                                        <circle cx="20" cy="12" r="3" fill="var(--border)"/>
+                                        <circle cx="32" cy="12" r="3" fill="var(--border)"/>
+                                        <circle cx="44" cy="12" r="3" fill="var(--border)"/>
+                                        <circle cx="56" cy="12" r="3" fill="var(--border)"/>
+                                        <!-- Lines -->
+                                        <rect x="18" y="22" width="44" height="3" rx="1" fill="var(--muted)" opacity="0.5"/>
+                                        <rect x="18" y="30" width="36" height="3" rx="1" fill="var(--muted)" opacity="0.4"/>
+                                        <rect x="18" y="38" width="40" height="3" rx="1" fill="var(--muted)" opacity="0.4"/>
+                                        <rect x="18" y="46" width="32" height="3" rx="1" fill="var(--muted)" opacity="0.3"/>
+                                        <rect x="18" y="54" width="38" height="3" rx="1" fill="var(--muted)" opacity="0.3"/>
+                                        <!-- Cursor -->
+                                        <rect x="18" y="62" width="2" height="4" fill="var(--accent-stdout)" class="cursor-blink"/>
+                                    </svg>
+                                </div>
+                                <span class="mono text-xs text-slate-400">PID</span>
+                                <h4 class="font-semibold">Bloc de Notas</h4>
+                                <p class="text-xs text-slate-500 mt-1">Proceso activo</p>
+                            </div>
+
+                            <!-- OUTPUT -->
+                            <div class="text-center" id="outputComponent">
+                                <div class="w-20 h-20 mx-auto mb-3 p-3 bg-slate-800/50 rounded-xl border border-slate-700">
+                                    <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <rect x="4" y="8" width="56" height="40" rx="3" stroke="var(--accent-stdout)" stroke-width="2" fill="none"/>
+                                        <rect x="8" y="12" width="48" height="32" rx="2" fill="var(--bg)"/>
+                                        <rect x="12" y="18" width="24" height="2" rx="1" fill="var(--accent-stdout)" opacity="0.7"/>
+                                        <rect x="12" y="24" width="36" height="2" rx="1" fill="var(--muted)" opacity="0.5"/>
+                                        <rect x="12" y="30" width="30" height="2" rx="1" fill="var(--muted)" opacity="0.4"/>
+                                        <rect x="12" y="36" width="20" height="2" rx="1" fill="var(--muted)" opacity="0.3"/>
+                                        <rect x="24" y="48" width="16" height="3" fill="var(--border)"/>
+                                        <rect x="20" y="51" width="24" height="3" rx="1" fill="var(--border)"/>
+                                        <circle cx="32" cy="44" r="1.5" fill="var(--accent-stdout)"/>
+                                    </svg>
+                                </div>
+                                <span class="mono text-xs text-emerald-400">fd=1</span>
+                                <h4 class="font-semibold">Monitor</h4>
+                                <p class="text-xs text-slate-500 mt-1">Salida estandar</p>
+                            </div>
+                        </div>
+
+                        <!-- Error output (appears when error) -->
+                        <div class="hidden mt-6 text-center" id="errorOutput">
+                            <div class="inline-block p-3 bg-orange-500/10 border border-orange-500/30 rounded-lg">
+                                <span class="mono text-xs text-orange-400">fd=2</span>
+                                <h4 class="font-semibold text-orange-400">STDERR - Mensaje de Error</h4>
+                                <p class="mono text-sm mt-2 text-orange-300">Error: No se puede abrir el archivo</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Current status -->
+                    <div class="mt-6 p-4 bg-black/30 rounded-lg mono text-sm" id="statusMessage">
+                        <span class="text-slate-500">// Haz clic en un boton para simular el flujo de datos</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Terminal Examples -->
+            <section class="reveal reveal-delay-3">
+                <h2 class="text-xl font-semibold mb-4">Ejemplos en Terminal</h2>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <!-- Input redirection -->
+                    <div class="terminal">
+                        <div class="terminal-header">
+                            <div class="terminal-dot bg-red-500"></div>
+                            <div class="terminal-dot bg-yellow-500"></div>
+                            <div class="terminal-dot bg-green-500"></div>
+                            <span class="mono text-xs text-slate-500 ml-2">entrada.sh</span>
+                        </div>
+                        <div class="terminal-body mono text-sm">
+                            <div class="terminal-line">
+                                <span class="terminal-prompt">$ </span>
+                                <span class="terminal-command">cat <span class="operator operator-input">&lt;</span> archivo.txt</span>
+                            </div>
+                            <div class="terminal-line terminal-output">
+                                El contenido del archivo se envia como entrada al comando cat
+                            </div>
+                            <div class="terminal-line mt-2">
+                                <span class="terminal-prompt">$ </span>
+                                <span class="terminal-command">sort <span class="operator operator-input">&lt;</span> numeros.txt</span>
+                            </div>
+                            <div class="terminal-line terminal-output">
+                                Los datos del archivo entran por <span class="text-cyan-400">stdin (fd=0)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Output/Error redirection -->
+                    <div class="terminal">
+                        <div class="terminal-header">
+                            <div class="terminal-dot bg-red-500"></div>
+                            <div class="terminal-dot bg-yellow-500"></div>
+                            <div class="terminal-dot bg-green-500"></div>
+                            <span class="mono text-xs text-slate-500 ml-2">salida.sh</span>
+                        </div>
+                        <div class="terminal-body mono text-sm">
+                            <div class="terminal-line">
+                                <span class="terminal-prompt">$ </span>
+                                <span class="terminal-command">ls <span class="operator operator-redir">&gt;</span> lista.txt</span>
+                            </div>
+                            <div class="terminal-line terminal-output">
+                                La salida va al archivo, no a pantalla
+                            </div>
+                            <div class="terminal-line mt-2">
+                                <span class="terminal-prompt">$ </span>
+                                <span class="terminal-command">ls noexiste <span class="operator operator-error">2&gt;</span> error.log</span>
+                            </div>
+                            <div class="terminal-line terminal-error">
+                                Los errores van a error.log por <span class="text-orange-400">stderr (fd=2)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Combined example -->
+            <section class="reveal reveal-delay-4">
+                <div class="terminal">
+                    <div class="terminal-header">
+                        <div class="terminal-dot bg-red-500"></div>
+                        <div class="terminal-dot bg-yellow-500"></div>
+                        <div class="terminal-dot bg-green-500"></div>
+                        <span class="mono text-xs text-slate-500 ml-2">ejemplo-completo.sh</span>
+                    </div>
+                    <div class="terminal-body mono text-sm space-y-3">
+                        <div class="terminal-line">
+                            <span class="text-slate-500"># Combinando redirecciones</span>
+                        </div>
+                        <div class="terminal-line">
+                            <span class="terminal-prompt">$ </span>
+                            <span class="terminal-command">grep "error" <span class="operator operator-input">&lt;</span> log.txt <span class="operator operator-redir">&gt;</span> errores.txt <span class="operator operator-error">2&gt;</span> debug.log</span>
+                        </div>
+                        <div class="grid md:grid-cols-3 gap-2 mt-3 text-xs">
+                            <div class="p-2 bg-cyan-500/10 rounded border border-cyan-500/20">
+                                <span class="text-cyan-400">&lt; log.txt</span>
+                                <p class="text-slate-500 mt-1">stdin = archivo log.txt</p>
+                            </div>
+                            <div class="p-2 bg-emerald-500/10 rounded border border-emerald-500/20">
+                                <span class="text-emerald-400">&gt; errores.txt</span>
+                                <p class="text-slate-500 mt-1">stdout = archivo errores.txt</p>
+                            </div>
+                            <div class="p-2 bg-orange-500/10 rounded border border-orange-500/20">
+                                <span class="text-orange-400">2&gt; debug.log</span>
+                                <p class="text-slate-500 mt-1">stderr = archivo debug.log</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Summary table -->
+            <section class="reveal reveal-delay-5">
+                <div class="component-box overflow-x-auto">
+                    <h3 class="font-semibold mb-4">Resumen de Descriptores</h3>
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-slate-700">
+                                <th class="text-left py-3 px-2">Descriptor</th>
+                                <th class="text-left py-3 px-2">Nombre</th>
+                                <th class="text-left py-3 px-2">Dispositivo</th>
+                                <th class="text-left py-3 px-2">Operador</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b border-slate-800">
+                                <td class="py-3 px-2"><span class="descriptor-badge descriptor-0">0</span></td>
+                                <td class="py-3 px-2 mono text-cyan-400">stdin</td>
+                                <td class="py-3 px-2 text-slate-400">Teclado</td>
+                                <td class="py-3 px-2"><code class="operator operator-input">&lt;</code></td>
+                            </tr>
+                            <tr class="border-b border-slate-800">
+                                <td class="py-3 px-2"><span class="descriptor-badge descriptor-1">1</span></td>
+                                <td class="py-3 px-2 mono text-emerald-400">stdout</td>
+                                <td class="py-3 px-2 text-slate-400">Monitor</td>
+                                <td class="py-3 px-2"><code class="operator operator-redir">&gt;</code></td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-2"><span class="descriptor-badge descriptor-2">2</span></td>
+                                <td class="py-3 px-2 mono text-orange-400">stderr</td>
+                                <td class="py-3 px-2 text-slate-400">Monitor (separado)</td>
+                                <td class="py-3 px-2"><code class="operator operator-error">2&gt;</code></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="max-w-6xl mx-auto mt-16 pt-8 border-t border-slate-800 text-center reveal">
+            <p class="text-sm text-slate-500">
+                Los descriptores de archivo son fundamentales en Unix/Linux para controlar el flujo de datos entre procesos
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        // DOM Elements - inicializados después de cargar el DOM
+        let elements = {};
+        let isAnimating = false;
+
+        // Inicializar referencias DOM
+        function initElements() {
+            elements = {
+                stdinStatus: document.getElementById('stdinStatus'),
+                stdoutStatus: document.getElementById('stdoutStatus'),
+                stderrStatus: document.getElementById('stderrStatus'),
+                stdinBox: document.getElementById('stdinBox'),
+                stdoutBox: document.getElementById('stdoutBox'),
+                stderrBox: document.getElementById('stderrBox'),
+                stdinPath: document.getElementById('stdinPath'),
+                stdoutPath: document.getElementById('stdoutPath'),
+                stderrPath: document.getElementById('stderrPath'),
+                inputComponent: document.getElementById('inputComponent'),
+                processComponent: document.getElementById('processComponent'),
+                outputComponent: document.getElementById('outputComponent'),
+                errorOutput: document.getElementById('errorOutput'),
+                statusMessage: document.getElementById('statusMessage'),
+                flowSvg: document.getElementById('flowSvg')
+            };
+        }
+
+        // Clear all active states
+        function clearActiveStates() {
+            if (!elements.stdinStatus) return;
+            
+            elements.stdinStatus.className = 'status-indicator';
+            elements.stdoutStatus.className = 'status-indicator';
+            elements.stderrStatus.className = 'status-indicator';
+            
+            elements.stdinBox.classList.remove('stdin-active');
+            elements.stdoutBox.classList.remove('stdout-active');
+            elements.stderrBox.classList.remove('stderr-active');
+            
+            elements.stdinPath.classList.remove('stdin-flow');
+            elements.stdoutPath.classList.remove('stdout-flow');
+            elements.stderrPath.classList.remove('stderr-flow');
+            
+            elements.stdinPath.style.stroke = 'var(--border)';
+            elements.stdoutPath.style.stroke = 'var(--border)';
+            elements.stderrPath.style.stroke = 'var(--border)';
+            
+            elements.stdinPath.style.strokeDasharray = '5,5';
+            elements.stdoutPath.style.strokeDasharray = '5,5';
+            elements.stderrPath.style.strokeDasharray = '5,5';
+            
+            elements.errorOutput.classList.add('hidden');
+        }
+
+        // Activate component
+        function activateComponent(type, duration) {
+            return new Promise(resolve => {
+                if (!elements[type + 'Status']) {
+                    resolve();
+                    return;
+                }
+                
+                elements[type + 'Status'].classList.add('active-' + type);
+                elements[type + 'Box'].classList.add(type + '-active');
+                
+                setTimeout(resolve, duration);
+            });
+        }
+
+        // Animate flow line
+        function animateFlowLine(type) {
+            if (!elements[type + 'Path']) return;
+            
+            const path = elements[type + 'Path'];
+            path.classList.add(type + '-flow');
+            path.style.strokeDasharray = '12,8';
+        }
+
+        // Type text effect
+        function typeText(element, text, speed) {
+            return new Promise(resolve => {
+                if (!element) {
+                    resolve();
+                    return;
+                }
+                
+                element.textContent = '';
+                let i = 0;
+                const interval = setInterval(() => {
+                    if (i < text.length) {
+                        element.textContent += text[i];
+                        i++;
+                    } else {
+                        clearInterval(interval);
+                        resolve();
+                    }
+                }, speed);
+            });
+        }
+
+        // Simulate flows
+        async function simulateFlow(flowType) {
+            if (isAnimating) return;
+            isAnimating = true;
+            
+            clearActiveStates();
+            
+            const statusEl = elements.statusMessage;
+            
+            switch(flowType) {
+                case 'normal':
+                    // Normal flow: keyboard -> process -> monitor
+                    await typeText(statusEl, '// Usuario escribe en el teclado...', 30);
+                    activateComponent('stdin', 800);
+                    animateFlowLine('stdin');
+                    
+                    await new Promise(r => setTimeout(r, 1000));
+                    await typeText(statusEl, '// Datos recibidos por el proceso (bloc de notas)', 30);
+                    
+                    await new Promise(r => setTimeout(r, 800));
+                    await typeText(statusEl, '// Proceso envia resultado al monitor...', 30);
+                    activateComponent('stdout', 800);
+                    animateFlowLine('stdout');
+                    
+                    await new Promise(r => setTimeout(r, 1000));
+                    await typeText(statusEl, '// STDOUT (fd=1) muestra el texto en pantalla', 30);
+                    break;
+                    
+                case 'input-redr':
+                    // Input redirection: file -> process
+                    await typeText(statusEl, '// Redireccion de entrada: archivo < input.txt', 30);
+                    
+                    await new Promise(r => setTimeout(r, 500));
+                    elements.stdinPath.style.stroke = 'var(--accent-stdin)';
+                    elements.stdinPath.style.strokeDasharray = '12,8';
+                    animateFlowLine('stdin');
+                    activateComponent('stdin', 1500);
+                    
+                    await new Promise(r => setTimeout(r, 1000));
+                    await typeText(statusEl, '// El archivo reemplaza al teclado como STDIN (fd=0)', 30);
+                    break;
+                    
+                case 'output-redr':
+                    // Output redirection: process -> file
+                    await typeText(statusEl, '// Redireccion de salida: comando > archivo.txt', 30);
+                    activateComponent('stdout', 1000);
+                    animateFlowLine('stdout');
+                    
+                    await new Promise(r => setTimeout(r, 1000));
+                    await typeText(statusEl, '// La salida va a un archivo, no al monitor (fd=1)', 30);
+                    break;
+                    
+                case 'error':
+                    // Error simulation: process -> stderr
+                    await typeText(statusEl, '// Simulando un error en el proceso...', 30);
+                    activateComponent('stderr', 500);
+                    
+                    await new Promise(r => setTimeout(r, 800));
+                    animateFlowLine('stderr');
+                    elements.errorOutput.classList.remove('hidden');
+                    
+                    await typeText(statusEl, '// STDERR (fd=2) separa errores de la salida normal', 30);
+                    break;
+            }
+            
+            setTimeout(() => {
+                isAnimating = false;
+            }, 500);
+        }
+
+        // Intersection Observer for reveal animations
+        function initObserver() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            });
+            
+            document.querySelectorAll('.reveal').forEach(el => {
+                observer.observe(el);
+            });
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            initElements();
+            initObserver();
+        });
+    </script>
+</body>
+</html>

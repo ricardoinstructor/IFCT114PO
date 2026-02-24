@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador Interactivo SSH</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --term-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --accent: #4ade80; /* Verde terminal */
+            --user-cmd: #60a5fa; /* Azul comando */
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 700px;
+            background: var(--term-bg);
+            border-radius: 12px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+            border: 1px solid #334155;
+            overflow: hidden;
+        }
+
+        /* Header de la Terminal */
+        .terminal-header {
+            background: #334155;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dot { width: 12px; height: 12px; border-radius: 50%; }
+        .red { background: #ef4444; }
+        .yellow { background: #f59e0b; }
+        .green { background: #10b981; }
+        .title { margin-left: 10px; font-size: 13px; font-weight: bold; color: var(--text-dim); }
+
+        /* Contenido de la Terminal */
+        #terminal-body {
+            padding: 20px;
+            height: 350px;
+            overflow-y: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .line { margin-bottom: 8px; white-space: pre-wrap; }
+        .user-line { color: var(--user-cmd); }
+        .system-line { color: var(--text-main); }
+        .success-line { color: var(--accent); font-weight: bold; }
+
+        /* Input */
+        .input-area {
+            display: flex;
+            padding: 10px 20px;
+            background: #1e293b;
+            border-top: 1px solid #334155;
+        }
+
+        .prompt { color: var(--accent); margin-right: 10px; font-weight: bold; }
+        
+        input {
+            background: transparent;
+            border: none;
+            color: white;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            flex: 1;
+            outline: none;
+        }
+
+        /* Indicadores de progreso */
+        .status-bar {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            padding: 20px;
+            width: 100%;
+            max-width: 700px;
+        }
+
+        .status-item {
+            padding: 10px;
+            text-align: center;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            font-size: 12px;
+            transition: all 0.3s;
+            opacity: 0.5;
+        }
+
+        .status-item.active {
+            opacity: 1;
+            border-color: var(--user-cmd);
+            background: rgba(96, 165, 250, 0.1);
+        }
+
+        .status-item.complete {
+            opacity: 1;
+            border-color: var(--accent);
+            background: rgba(74, 222, 128, 0.1);
+            color: var(--accent);
+        }
+
+        h1 { margin-bottom: 5px; font-size: 24px; }
+        p.subtitle { margin-bottom: 30px; color: var(--text-dim); }
+    </style>
+</head>
+<body>
+
+    <h1>Simulador de Conexión SSH</h1>
+    <p class="subtitle">Escribe los comandos para conectarte al servidor remoto.</p>
+
+    <div class="container">
+        <div class="terminal-header">
+            <div class="dot red"></div>
+            <div class="dot yellow"></div>
+            <div class="dot green"></div>
+            <span class="title">ssh admin@192.168.1.50</span>
+        </div>
+
+        <div id="terminal-body">
+            <div class="line system-line">Terminal lista. Escribe "ssh admin@192.168.1.50" para comenzar la conexión.</div>
+        </div>
+
+        <div class="input-area" id="input-container">
+            <span class="prompt" id="prompt-symbol">$</span>
+            <input type="text" id="user-input" autofocus autocomplete="off" spellcheck="false">
+        </div>
+    </div>
+
+    <div class="status-bar">
+        <div id="step-1" class="status-item">1. Identidad del Host</div>
+        <div id="step-2" class="status-item">2. Autenticación</div>
+        <div id="step-3" class="status-item">3. Sesión Shell</div>
+    </div>
+
+    <script>
+        const terminalBody = document.getElementById('terminal-body');
+        const userInput = document.getElementById('user-input');
+        const inputContainer = document.getElementById('input-container');
+        const promptSymbol = document.getElementById('prompt-symbol');
+        
+        const steps = {
+            1: document.getElementById('step-1'),
+            2: document.getElementById('step-2'),
+            3: document.getElementById('step-3')
+        };
+
+        let currentStep = 0;
+
+        function addLine(text, type = 'system-line') {
+            const line = document.createElement('div');
+            line.className = `line ${type}`;
+            line.textContent = text;
+            terminalBody.appendChild(line);
+            terminalBody.scrollTop = terminalBody.scrollHeight;
+        }
+
+        userInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                const val = userInput.value.trim();
+                if (!val && currentStep !== 2) return;
+
+                processCommand(val);
+                userInput.value = '';
+            }
+        });
+
+        function processCommand(cmd) {
+            // Paso 0: Iniciar conexión
+            if (currentStep === 0) {
+                if (cmd.toLowerCase() === 'ssh admin@192.168.1.50') {
+                    addLine(`$ ${cmd}`, 'user-line');
+                    addLine("The authenticity of host '192.168.1.50 (192.168.1.50)' can't be established.");
+                    addLine("ECDSA key fingerprint is SHA256:7uI9pX2LzR9mK0BvWq8T+5YnL3...");
+                    addLine("Are you sure you want to continue connecting (yes/no)?");
+                    steps[1].classList.add('active');
+                    currentStep = 1;
+                } else {
+                    addLine(`$ ${cmd}`, 'user-line');
+                    addLine("Comando no reconocido. Prueba con: ssh admin@192.168.1.50");
+                }
+            } 
+            // Paso 1: Aceptar Fingerprint
+            else if (currentStep === 1) {
+                addLine(`$ ${cmd}`, 'user-line');
+                if (cmd.toLowerCase() === 'yes') {
+                    addLine("Warning: Permanently added '192.168.1.50' (ECDSA) to the list of known hosts.");
+                    addLine("admin@192.168.1.50's password:");
+                    userInput.type = "password"; // Ocultar password
+                    steps[1].classList.remove('active');
+                    steps[1].classList.add('complete');
+                    steps[2].classList.add('active');
+                    currentStep = 2;
+                } else {
+                    addLine("Conexión abortada por el usuario.");
+                    currentStep = 0;
+                }
+            }
+            // Paso 2: Password
+            else if (currentStep === 2) {
+                addLine("$ ********", 'user-line');
+                addLine("Verificando credenciales...");
+                
+                setTimeout(() => {
+                    addLine("\nWelcome to Ubuntu 24.04 LTS (GNU/Linux 6.8.0-generic)\n", "success-line");
+                    addLine(" * Documentation:  https://help.ubuntu.com");
+                    addLine(" * Management:     https://landscape.canonical.com\n");
+                    addLine("Last login: Tue Feb 24 14:00:21 2026 from 192.168.1.15");
+                    
+                    userInput.type = "text";
+                    promptSymbol.textContent = "admin@remote-server:~$";
+                    steps[2].classList.remove('active');
+                    steps[2].classList.add('complete');
+                    steps[3].classList.add('complete');
+                    currentStep = 3;
+                }, 800);
+            }
+            // Paso 3: Shell abierta
+            else if (currentStep === 3) {
+                addLine(`admin@remote-server:~$ ${cmd}`, 'user-line');
+                if (cmd.toLowerCase() === 'ls') {
+                    addLine("Desktop  Documents  Downloads  public_html  scripts");
+                } else if (cmd.toLowerCase() === 'whoami') {
+                    addLine("admin");
+                } else {
+                    addLine(`Ejecutando ${cmd} en el servidor remoto...`);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

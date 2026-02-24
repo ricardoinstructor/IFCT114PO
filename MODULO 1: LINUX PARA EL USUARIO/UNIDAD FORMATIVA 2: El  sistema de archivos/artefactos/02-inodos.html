@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Inodo LifeCycle: Create, CP & MV</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --panel: #1e293b;
+            --dir-color: #f472b6;
+            --inode-color: #3b82f6;
+            --data-color: #10b981;
+            --empty: #334155;
+        }
+
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        
+        .grid-main { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; width: 100%; max-width: 1200px; }
+        
+        .column { background: var(--panel); border-radius: 12px; padding: 15px; border: 1px solid #475569; min-height: 400px; }
+        h3 { border-bottom: 2px solid #334155; padding-bottom: 10px; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Directorio */
+        .dir-entry { display: flex; justify-content: space-between; padding: 8px; margin: 5px 0; background: rgba(244, 114, 182, 0.1); border-left: 4px solid var(--dir-color); animation: slide 0.3s ease; }
+        
+        /* Inodos */
+        .inode-card { padding: 10px; margin-bottom: 10px; border: 1px solid var(--inode-color); border-radius: 6px; font-size: 0.8rem; background: rgba(59, 130, 246, 0.05); }
+        .inode-card.empty { border: 1px dashed var(--empty); color: var(--empty); background: transparent; }
+
+        /* Bloques de Datos */
+        .data-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+        .block { height: 40px; border: 1px solid var(--empty); display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: var(--empty); border-radius: 4px; transition: all 0.3s; }
+        .block.filled { background: var(--data-color); color: var(--bg); border-color: var(--data-color); font-weight: bold; }
+
+        /* Controles */
+        .controls { margin-bottom: 30px; display: flex; gap: 10px; background: #1e293b; padding: 20px; border-radius: 50px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        button { padding: 10px 20px; border: none; border-radius: 25px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-create { background: var(--data-color); color: white; }
+        .btn-cp { background: var(--inode-color); color: white; }
+        .btn-mv { background: var(--dir-color); color: white; }
+        button:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        @keyframes slide { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+    </style>
+</head>
+<body>
+
+    <h1 style="color: var(--inode-color)">Simulador Interno de Archivos</h1>
+
+    <div class="controls">
+        <button class="btn-create" onclick="createFile()">1. Crear 'notas.txt' (touch)</button>
+        <button class="btn-cp" id="cp-btn" onclick="copyFile()" disabled>2. Copiar (cp notas.txt backup.txt)</button>
+        <button class="btn-mv" id="mv-btn" onclick="moveFile()" disabled>3. Mover (mv backup.txt final.doc)</button>
+        <button style="background: #475569; color: white" onclick="location.reload()">Reiniciar</button>
+    </div>
+
+    <div class="grid-main">
+        <div class="column">
+            <h3>📂 Directorio (Tabla)</h3>
+            <div id="directory-list">
+                <p style="color: var(--empty); text-align: center;">Directorio vacío...</p>
+            </div>
+        </div>
+
+        <div class="column">
+            <h3>🆔 Tabla de Inodos</h3>
+            <div id="inode-list">
+                <div class="inode-card empty">Inodo libre #101</div>
+                <div class="inode-card empty">Inodo libre #102</div>
+                <div class="inode-card empty">Inodo libre #103</div>
+            </div>
+        </div>
+
+        <div class="column">
+            <h3>💾 Bloques de Datos (Disco)</h3>
+            <div class="data-grid" id="data-grid">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        // Inicializar bloques
+        const grid = document.getElementById('data-grid');
+        for(let i=0; i<16; i++) {
+            grid.innerHTML += `<div class="block" id="b-${i}">Vacio</div>`;
+        }
+
+        let fileCreated = false;
+        let fileCopied = false;
+
+        function createFile() {
+            if(fileCreated) return;
+            
+            // 1. Entrada en directorio
+            document.getElementById('directory-list').innerHTML = `<div class="dir-entry"><span>notas.txt</span> <span>→ Inodo 101</span></div>`;
+            
+            // 2. Rellenar Inodo
+            const inodeList = document.getElementById('inode-list');
+            inodeList.innerHTML = `
+                <div class="inode-card">
+                    <strong>Inodo #101</strong><br>
+                    Modo: -rw-r--r--<br>
+                    Punteros: [B0, B1]
+                </div>
+                <div class="inode-card empty">Inodo libre #102</div>
+                <div class="inode-card empty">Inodo libre #103</div>
+            `;
+
+            // 3. Rellenar bloques
+            document.getElementById('b-0').className = 'block filled';
+            document.getElementById('b-0').innerText = 'DATA_A';
+            document.getElementById('b-1').className = 'block filled';
+            document.getElementById('b-1').innerText = 'DATA_B';
+
+            fileCreated = true;
+            document.getElementById('cp-btn').disabled = false;
+        }
+
+        function copyFile() {
+            if(!fileCreated || fileCopied) return;
+
+            // 1. Nueva entrada en directorio
+            document.getElementById('directory-list').innerHTML += `<div class="dir-entry"><span>backup.txt</span> <span>→ Inodo 102</span></div>`;
+
+            // 2. Nuevo Inodo (Copia de metadatos pero ID distinto)
+            const inodeList = document.getElementById('inode-list');
+            inodeList.innerHTML = `
+                <div class="inode-card"><strong>Inodo #101</strong> (notas.txt)</div>
+                <div class="inode-card" style="border-color: var(--data-color)">
+                    <strong>Inodo #102</strong> (backup.txt)<br>
+                    Punteros: [B4, B5]
+                </div>
+                <div class="inode-card empty">Inodo libre #103</div>
+            `;
+
+            // 3. Nuevos bloques (Duplicación física)
+            document.getElementById('b-4').className = 'block filled';
+            document.getElementById('b-4').innerText = 'DATA_A';
+            document.getElementById('b-5').className = 'block filled';
+            document.getElementById('b-5').innerText = 'DATA_B';
+
+            fileCopied = true;
+            document.getElementById('mv-btn').disabled = false;
+        }
+
+        function moveFile() {
+            // El comando mv sobre backup.txt -> final.doc
+            // 1. Cambia el nombre en el directorio, pero el inodo sigue siendo el 102
+            const dir = document.getElementById('directory-list');
+            dir.innerHTML = `
+                <div class="dir-entry"><span>notas.txt</span> <span>→ Inodo 101</span></div>
+                <div class="dir-entry" style="background: rgba(255,255,255,0.1)"><span>final.doc</span> <span style="color:var(--dir-color)">→ Inodo 102 (Igual!)</span></div>
+            `;
+            
+            // Observa que los bloques B4 y B5 no se han movido ni cambiado.
+            alert("Observa: El nombre ha cambiado a 'final.doc' en el Directorio, pero sigue apuntando al Inodo 102 y los bloques de datos no se han tocado.");
+        }
+    </script>
+</body>
+</html>

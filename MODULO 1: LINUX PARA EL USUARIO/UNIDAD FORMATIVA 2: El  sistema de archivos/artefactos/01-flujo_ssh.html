@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Flujo Bidireccional SSH</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --client-color: #3b82f6;
+            --server-color: #f43f5e;
+            --accent: #10b981;
+            --line: #334155;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px;
+            margin: 0;
+        }
+
+        .diagram-container {
+            display: grid;
+            grid-template-columns: 1fr 200px 1fr;
+            gap: 20px;
+            width: 100%;
+            max-width: 900px;
+            position: relative;
+        }
+
+        .actor {
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: bold;
+            border: 2px solid;
+            background: rgba(255,255,255,0.05);
+        }
+
+        .client { border-color: var(--client-color); color: var(--client-color); }
+        .server { border-color: var(--server-color); color: var(--server-color); }
+
+        .flow-area {
+            grid-column: 1 / span 3;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+            position: relative;
+        }
+
+        .message {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 10px;
+            background: #1e293b;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            opacity: 0.2;
+            transition: all 0.5s ease;
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+        }
+
+        .message.active {
+            opacity: 1;
+            transform: scale(1.02);
+            box-shadow: 0 0 15px rgba(255,255,255,0.1);
+        }
+
+        /* Direccionalidad */
+        .to-server { border-right-color: var(--server-color); margin-right: 50px; }
+        .to-client { border-left-color: var(--client-color); margin-left: 50px; }
+
+        .arrow {
+            position: absolute;
+            font-size: 1.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .to-server .arrow { right: -35px; color: var(--server-color); }
+        .to-client .arrow { left: -35px; color: var(--client-color); }
+
+        .data-tag {
+            font-family: monospace;
+            background: #000;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--accent);
+            margin: 0 5px;
+        }
+
+        .controls {
+            margin-top: 40px;
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            background: var(--accent);
+            color: var(--bg);
+        }
+
+        button:disabled { background: #444; cursor: not-allowed; }
+
+        .info-panel {
+            margin-top: 30px;
+            max-width: 600px;
+            text-align: center;
+            color: #94a3b8;
+            height: 60px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Intercambio de Información SSH</h1>
+    
+    <div class="diagram-container">
+        <div class="actor client">💻 CLIENTE (Tu PC)</div>
+        <div style="text-align: center; font-size: 2rem;">⚡</div>
+        <div class="actor server">🖥️ SERVIDOR (Remoto)</div>
+
+        <div class="flow-area" id="flow-area">
+            <div class="message to-server" id="m1">
+                Solicitud de conexión: <span class="data-tag">SSH-2.0-OpenSSH</span>
+                <span class="arrow">➜</span>
+            </div>
+            <div class="message to-client" id="m2">
+                <span class="arrow">⬅</span>
+                ID del Servidor y <span class="data-tag">Host Public Key (Fingerprint)</span>
+            </div>
+            <div class="message to-server" id="m3">
+                Aceptación de huella y <span class="data-tag">Diffie-Hellman Key Exchange</span>
+                <span class="arrow">➜</span>
+            </div>
+            <div class="message to-server" id="m4">
+                Envío de Usuario y <span class="data-tag">Password (Cifrada con Session Key)</span>
+                <span class="arrow">➜</span>
+            </div>
+            <div class="message to-client" id="m5">
+                <span class="arrow">⬅</span>
+                Desafío OK: <span class="data-tag">Asignación de PTY / Shell</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="info-panel" id="info-text">
+        Pulsa "Siguiente" para ver cómo viaja la información.
+    </div>
+
+    <div class="controls">
+        <button id="nextBtn">Siguiente Paso</button>
+        <button id="resetBtn" style="background: #475569;">Reiniciar</button>
+    </div>
+
+    <script>
+        const steps = [
+            "El cliente inicia el contacto identificando su versión de protocolo.",
+            "El servidor responde enviando su clave pública. El cliente genera el 'Fingerprint' para que el usuario confirme si es el servidor real.",
+            "Ambas máquinas acuerdan una 'Llave de Sesión' efímera. ¡A partir de aquí todo es secreto!",
+            "El cliente envía el password dentro del túnel ya cifrado. Nadie en la red puede leerlo.",
+            "El servidor verifica el password y abre el canal para enviar la interfaz de comandos (Shell)."
+        ];
+
+        let current = 0;
+        const nextBtn = document.getElementById('nextBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const infoText = document.getElementById('info-text');
+
+        nextBtn.addEventListener('click', () => {
+            if (current < steps.length) {
+                const msg = document.getElementById(`m${current + 1}`);
+                msg.classList.add('active');
+                infoText.innerText = steps[current];
+                current++;
+                if (current === steps.length) nextBtn.disabled = true;
+            }
+        });
+
+        resetBtn.addEventListener('click', () => {
+            current = 0;
+            nextBtn.disabled = false;
+            infoText.innerText = "Pulsa 'Siguiente' para ver cómo viaja la información.";
+            document.querySelectorAll('.message').forEach(m => m.classList.remove('active'));
+        });
+    </script>
+</body>
+</html>
