@@ -1,0 +1,5 @@
+ Kernel Panic con Rocky10 y VirtualBox
+ 
+ https://forums.rockylinux.org/t/rl10-under-virtualbox/18762
+ 
+ 
